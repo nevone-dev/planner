@@ -8,6 +8,9 @@ export default class TaskManagerAgent {
     this.tasks = saved.map((t) => ({
       completed: false,
       dueDate: null,
+      bucket: 'now',
+      altitude: 'task',
+      domain: 'General',
       ...t,
     }));
     this.counter = this.tasks.reduce((m, t) => Math.max(m, t.id), 0) + 1;
@@ -23,18 +26,29 @@ export default class TaskManagerAgent {
     this.listeners.push(listener);
   }
 
-  addTask(title, dueDate = null) {
-    const task = { id: this.counter++, title, dueDate, completed: false };
+  addTask(title, dueDate = null, bucket = 'now', altitude = 'task', domain = 'General') {
+    const task = {
+      id: this.counter++,
+      title,
+      dueDate,
+      completed: false,
+      bucket,
+      altitude,
+      domain,
+    };
     this.tasks.push(task);
     this._emit();
     return task;
   }
 
-  updateTask(id, title, dueDate = null) {
+  updateTask(id, { title, dueDate = null, bucket, altitude, domain }) {
     const task = this.tasks.find((t) => t.id === id);
     if (task) {
-      task.title = title;
-      task.dueDate = dueDate;
+      if (title !== undefined) task.title = title;
+      if (dueDate !== undefined) task.dueDate = dueDate;
+      if (bucket !== undefined) task.bucket = bucket;
+      if (altitude !== undefined) task.altitude = altitude;
+      if (domain !== undefined) task.domain = domain;
       this._emit();
     }
   }
@@ -43,6 +57,22 @@ export default class TaskManagerAgent {
     const task = this.tasks.find((t) => t.id === id);
     if (task) {
       task.completed = !task.completed;
+      this._emit();
+    }
+  }
+
+  setBucket(id, bucket) {
+    const task = this.tasks.find((t) => t.id === id);
+    if (task) {
+      task.bucket = bucket;
+      this._emit();
+    }
+  }
+
+  setAltitude(id, altitude) {
+    const task = this.tasks.find((t) => t.id === id);
+    if (task) {
+      task.altitude = altitude;
       this._emit();
     }
   }
