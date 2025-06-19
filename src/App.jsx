@@ -26,7 +26,15 @@ const ALTITUDES = {
   task: 'Runway',
 };
 
-const DOMAINS = ['Health', 'Career', 'Finance', 'Learning', 'Life Admin', 'General'];
+const DOMAINS = [
+  'Health',
+  'Career',
+  'Finance',
+  'Learning',
+  'Life Admin',
+  'Home Maintenance',
+  'General',
+];
 
 function DraggableTask({ task, children }) {
   const { attributes, listeners, setNodeRef } = useDraggable({
