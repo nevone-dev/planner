@@ -1,6 +1,6 @@
 # Planner
 
-This is a minimal prototype of a modular planner. The UI is built with React and the app is wrapped in an Electron shell. Tasks are persisted locally using `localStorage`.
+This is a minimal prototype of a modular planner. The UI is built with React and the app is wrapped in an Electron shell. Tasks are persisted in a `db.json` file stored in the project root.
 
 ## Development
 
