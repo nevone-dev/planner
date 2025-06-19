@@ -28,3 +28,5 @@ The project uses a simple in-memory agent system inspired by `agents.md`.
 
 - Add, edit and delete tasks
 - Tasks are stored locally so they persist across restarts
+- Tasks support fuzzy priority buckets and altitude levels
+- Board view groups tasks by priority with inline editing
