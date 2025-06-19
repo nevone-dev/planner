@@ -18,7 +18,15 @@ const ALTITUDES = {
   task: 'Runway',
 };
 
-const DOMAINS = ['Health', 'Career', 'Finance', 'Learning', 'Life Admin', 'General'];
+const DOMAINS = [
+  'Health',
+  'Career',
+  'Finance',
+  'Learning',
+  'Life Admin',
+  'Home Maintenance',
+  'General',
+];
 
 export default function App() {
   const taskAgent = React.useMemo(() => new TaskManagerAgent(), []);
