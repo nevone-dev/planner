@@ -9,9 +9,16 @@ npm install
 npm run dev
 ```
 
-In another terminal, run:
+In another terminal, start Electron and point it at the dev server:
 
 ```
+npm run electron-dev
+```
+
+If you prefer to launch without the dev server, first build the project:
+
+```
+npm run build
 npm start
 ```
 
