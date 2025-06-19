@@ -278,13 +278,24 @@ export default function App() {
         {tasks
           .filter((t) => t.completed)
           .map((t) => (
-            <li key={t.id} className="border rounded p-2 flex justify-between">
+            <li
+              key={t.id}
+              className="border rounded p-2 flex justify-between items-center"
+            >
               <span>{t.title}</span>
-              {t.dueDate && (
-                <span className="text-sm text-gray-600">
-                  {new Date(t.dueDate).toLocaleDateString()}
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                {t.dueDate && (
+                  <span className="text-sm text-gray-600">
+                    {new Date(t.dueDate).toLocaleDateString()}
+                  </span>
+                )}
+                <button
+                  className="text-blue-600 text-xs"
+                  onClick={() => toggleComplete(t.id)}
+                >
+                  Reopen
+                </button>
+              </div>
             </li>
           ))}
       </ul>
