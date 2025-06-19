@@ -1,6 +1,14 @@
 import React from 'react';
 import TaskManagerAgent from './agents/TaskManagerAgent';
 import ScheduleAgent from './agents/ScheduleAgent';
+import {
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  useDraggable,
+  useDroppable,
+} from '@dnd-kit/core';
 
 const BUCKETS = {
   now: '🔥 Now',
@@ -19,6 +27,32 @@ const ALTITUDES = {
 };
 
 const DOMAINS = ['Health', 'Career', 'Finance', 'Learning', 'Life Admin', 'General'];
+
+function DraggableTask({ task, children }) {
+  const { attributes, listeners, setNodeRef } = useDraggable({
+    id: task.id.toString(),
+    data: { bucket: task.bucket },
+  });
+  return (
+    <li
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      className="border rounded p-2 text-sm bg-white"
+    >
+      {children}
+    </li>
+  );
+}
+
+function DroppableColumn({ id, children }) {
+  const { setNodeRef } = useDroppable({ id });
+  return (
+    <div ref={setNodeRef} className="bg-gray-100 p-2 rounded min-h-[80px]">
+      {children}
+    </div>
+  );
+}
 
 export default function App() {
   const taskAgent = React.useMemo(() => new TaskManagerAgent(), []);
@@ -39,6 +73,16 @@ export default function App() {
   const [editingBucket, setEditingBucket] = React.useState('now');
   const [editingAltitude, setEditingAltitude] = React.useState('task');
   const [editingDomain, setEditingDomain] = React.useState('General');
+
+  const sensors = useSensors(useSensor(PointerSensor));
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (over && active.data.current?.bucket !== over.id) {
+      taskAgent.setBucket(Number(active.id), over.id);
+      setTasks([...scheduleAgent.getTasks()]);
+    }
+  };
 
   React.useEffect(() => {
     taskAgent.addChangeListener(() => setTasks([...scheduleAgent.getTasks()]));
@@ -161,117 +205,119 @@ export default function App() {
         </button>
       </div>
 
-      <div className="grid grid-cols-5 gap-4">
-        {Object.entries(BUCKETS).map(([bKey, bLabel]) => (
-          <div key={bKey} className="bg-gray-100 p-2 rounded">
-            <h2 className="font-semibold mb-2 text-center">{bLabel}</h2>
-            <ul className="space-y-2">
-              {tasks
-                .filter((t) => t.bucket === bKey && !t.completed)
-                .map((t) => (
-                  <li key={t.id} className="border rounded p-2 text-sm">
-                    {editingId === t.id ? (
-                      <>
-                        <input
-                          className="border rounded px-1 py-0.5 mb-1 w-full"
-                          value={editingText}
-                          onChange={(e) => setEditingText(e.target.value)}
-                        />
-                        <input
-                          type="date"
-                          className="border rounded px-1 py-0.5 mb-1 w-full"
-                          value={editingDue}
-                          onChange={(e) => setEditingDue(e.target.value)}
-                        />
-                        <select
-                          className="border rounded px-1 py-0.5 mb-1 w-full"
-                          value={editingBucket}
-                          onChange={(e) => setEditingBucket(e.target.value)}
-                        >
-                          {Object.entries(BUCKETS).map(([k, v]) => (
-                            <option key={k} value={k}>
-                              {v}
-                            </option>
-                          ))}
-                        </select>
-                        <select
-                          className="border rounded px-1 py-0.5 mb-1 w-full"
-                          value={editingAltitude}
-                          onChange={(e) => setEditingAltitude(e.target.value)}
-                        >
-                          {Object.entries(ALTITUDES).map(([k, v]) => (
-                            <option key={k} value={k}>
-                              {v}
-                            </option>
-                          ))}
-                        </select>
-                        <select
-                          className="border rounded px-1 py-0.5 mb-1 w-full"
-                          value={editingDomain}
-                          onChange={(e) => setEditingDomain(e.target.value)}
-                        >
-                          {DOMAINS.map((d) => (
-                            <option key={d} value={d}>
-                              {d}
-                            </option>
-                          ))}
-                        </select>
-                        <div className="flex justify-end gap-2">
-                          <button
-                            className="text-green-600 text-xs"
-                            onClick={saveEdit}
-                          >
-                            Save
-                          </button>
-                          <button
-                            className="text-gray-600 text-xs"
-                            onClick={cancelEdit}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex items-center mb-1">
+      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+        <div className="grid grid-cols-5 gap-4">
+          {Object.entries(BUCKETS).map(([bKey, bLabel]) => (
+            <DroppableColumn key={bKey} id={bKey}>
+              <h2 className="font-semibold mb-2 text-center">{bLabel}</h2>
+              <ul className="space-y-2">
+                {tasks
+                  .filter((t) => t.bucket === bKey && !t.completed)
+                  .map((t) => (
+                    <DraggableTask key={t.id} task={t}>
+                      {editingId === t.id ? (
+                        <>
                           <input
-                            type="checkbox"
-                            className="mr-1"
-                            checked={t.completed}
-                            onChange={() => toggleComplete(t.id)}
+                            className="border rounded px-1 py-0.5 mb-1 w-full"
+                            value={editingText}
+                            onChange={(e) => setEditingText(e.target.value)}
                           />
-                          <span className="flex-grow">{t.title}</span>
-                        </div>
-                        {t.dueDate && (
-                          <div className="text-gray-600 text-xs mb-1">
-                            {new Date(t.dueDate).toLocaleDateString()}
+                          <input
+                            type="date"
+                            className="border rounded px-1 py-0.5 mb-1 w-full"
+                            value={editingDue}
+                            onChange={(e) => setEditingDue(e.target.value)}
+                          />
+                          <select
+                            className="border rounded px-1 py-0.5 mb-1 w-full"
+                            value={editingBucket}
+                            onChange={(e) => setEditingBucket(e.target.value)}
+                          >
+                            {Object.entries(BUCKETS).map(([k, v]) => (
+                              <option key={k} value={k}>
+                                {v}
+                              </option>
+                            ))}
+                          </select>
+                          <select
+                            className="border rounded px-1 py-0.5 mb-1 w-full"
+                            value={editingAltitude}
+                            onChange={(e) => setEditingAltitude(e.target.value)}
+                          >
+                            {Object.entries(ALTITUDES).map(([k, v]) => (
+                              <option key={k} value={k}>
+                                {v}
+                              </option>
+                            ))}
+                          </select>
+                          <select
+                            className="border rounded px-1 py-0.5 mb-1 w-full"
+                            value={editingDomain}
+                            onChange={(e) => setEditingDomain(e.target.value)}
+                          >
+                            {DOMAINS.map((d) => (
+                              <option key={d} value={d}>
+                                {d}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="flex justify-end gap-2">
+                            <button
+                              className="text-green-600 text-xs"
+                              onClick={saveEdit}
+                            >
+                              Save
+                            </button>
+                            <button
+                              className="text-gray-600 text-xs"
+                              onClick={cancelEdit}
+                            >
+                              Cancel
+                            </button>
                           </div>
-                        )}
-                        <div className="text-xs mb-1">
-                          {ALTITUDES[t.altitude]} – {t.domain}
-                        </div>
-                        <div className="flex justify-end gap-1">
-                          <button
-                            className="text-blue-600 text-xs"
-                            onClick={() => startEdit(t)}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="text-red-600 text-xs"
-                            onClick={() => deleteTask(t.id)}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </li>
-                ))}
-            </ul>
-          </div>
-        ))}
-      </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-center mb-1">
+                            <input
+                              type="checkbox"
+                              className="mr-1"
+                              checked={t.completed}
+                              onChange={() => toggleComplete(t.id)}
+                            />
+                            <span className="flex-grow">{t.title}</span>
+                          </div>
+                          {t.dueDate && (
+                            <div className="text-gray-600 text-xs mb-1">
+                              {new Date(t.dueDate).toLocaleDateString()}
+                            </div>
+                          )}
+                          <div className="text-xs mb-1">
+                            {ALTITUDES[t.altitude]} – {t.domain}
+                          </div>
+                          <div className="flex justify-end gap-1">
+                            <button
+                              className="text-blue-600 text-xs"
+                              onClick={() => startEdit(t)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="text-red-600 text-xs"
+                              onClick={() => deleteTask(t.id)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </DraggableTask>
+                  ))}
+              </ul>
+            </DroppableColumn>
+          ))}
+        </div>
+      </DndContext>
 
       <h2 className="text-xl font-semibold mt-6 mb-2">Completed</h2>
       <ul className="space-y-2">
