@@ -11,8 +11,10 @@ export default function App() {
 
   const [tasks, setTasks] = React.useState(scheduleAgent.getTasks());
   const [newTitle, setNewTitle] = React.useState('');
+  const [newDue, setNewDue] = React.useState('');
   const [editingId, setEditingId] = React.useState(null);
   const [editingText, setEditingText] = React.useState('');
+  const [editingDue, setEditingDue] = React.useState('');
 
   React.useEffect(() => {
     taskAgent.addChangeListener(() => setTasks([...scheduleAgent.getTasks()]));
@@ -22,20 +24,23 @@ export default function App() {
 
   const handleAdd = () => {
     if (newTitle.trim()) {
-      taskAgent.addTask(newTitle.trim());
+      taskAgent.addTask(newTitle.trim(), newDue || null);
       setNewTitle('');
+      setNewDue('');
     }
   };
 
   const startEdit = (task) => {
     setEditingId(task.id);
     setEditingText(task.title);
+    setEditingDue(task.dueDate || '');
   };
 
   const saveEdit = () => {
-    taskAgent.updateTask(editingId, editingText);
+    taskAgent.updateTask(editingId, editingText, editingDue || null);
     setEditingId(null);
     setEditingText('');
+    setEditingDue('');
   };
 
   const cancelEdit = () => {
@@ -47,6 +52,10 @@ export default function App() {
     taskAgent.deleteTask(id);
   };
 
+  const toggleComplete = (id) => {
+    taskAgent.toggleComplete(id);
+  };
+
   return (
     <div className="p-4 font-sans max-w-lg mx-auto">
       <h1 className="text-3xl font-bold mb-4 text-center">Planner</h1>
@@ -56,9 +65,12 @@ export default function App() {
           placeholder="New task"
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') handleAdd();
-          }}
+        />
+        <input
+          type="date"
+          className="border rounded px-2 py-1"
+          value={newDue}
+          onChange={(e) => setNewDue(e.target.value)}
         />
         <button
           className="bg-blue-500 text-white px-3 py-1 rounded"
@@ -80,6 +92,12 @@ export default function App() {
                   value={editingText}
                   onChange={(e) => setEditingText(e.target.value)}
                 />
+                <input
+                  type="date"
+                  className="border rounded px-2 py-1 mr-2"
+                  value={editingDue}
+                  onChange={(e) => setEditingDue(e.target.value)}
+                />
                 <button className="text-green-600 mr-2" onClick={saveEdit}>
                   Save
                 </button>
@@ -89,7 +107,18 @@ export default function App() {
               </>
             ) : (
               <>
+                <input
+                  type="checkbox"
+                  className="mr-2"
+                  checked={t.completed}
+                  onChange={() => toggleComplete(t.id)}
+                />
                 <span className="flex-grow">{t.title}</span>
+                {t.dueDate && (
+                  <span className="text-sm text-gray-600 mr-2">
+                    {new Date(t.dueDate).toLocaleDateString()}
+                  </span>
+                )}
                 <button
                   className="text-blue-600 mr-2"
                   onClick={() => startEdit(t)}

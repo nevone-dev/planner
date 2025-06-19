@@ -4,13 +4,14 @@ export default class NotesAgent {
     this.counter = 1;
   }
 
-  addNote(text) {
-    const note = { id: this.counter++, text };
+  addNote(text, taskId = null) {
+    const note = { id: this.counter++, text, taskId };
     this.notes.push(note);
     return note;
   }
 
-  getNotes() {
-    return this.notes;
+  getNotes(taskId = null) {
+    if (taskId === null) return this.notes;
+    return this.notes.filter((n) => n.taskId === taskId);
   }
 }
