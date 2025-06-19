@@ -37,10 +37,18 @@ const DOMAINS = [
   'General',
 ];
 
-function DraggableTask({ task, children }) {
+const DOMAIN_MAP = DOMAINS.reduce((acc, d) => ({ ...acc, [d]: d }), {});
+
+const GROUPINGS = {
+  bucket: { label: 'Bucket', categories: BUCKETS },
+  altitude: { label: 'Altitude', categories: ALTITUDES },
+  domain: { label: 'Domain', categories: DOMAIN_MAP },
+};
+
+function DraggableTask({ task, groupBy, children }) {
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: task.id.toString(),
-    data: { bucket: task.bucket },
+    data: { group: task[groupBy] },
   });
   return (
     <li
@@ -90,6 +98,7 @@ export default function App() {
   const [editingAltitude, setEditingAltitude] = React.useState('task');
   const [editingDomain, setEditingDomain] = React.useState('General');
   const [activeId, setActiveId] = React.useState(null);
+  const [groupBy, setGroupBy] = React.useState('bucket');
 
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -99,8 +108,15 @@ export default function App() {
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
-    if (over && active.data.current?.bucket !== over.id) {
-      taskAgent.setBucket(Number(active.id), over.id);
+    if (over && active.data.current?.group !== over.id) {
+      const id = Number(active.id);
+      if (groupBy === 'bucket') {
+        taskAgent.setBucket(id, over.id);
+      } else if (groupBy === 'altitude') {
+        taskAgent.setAltitude(id, over.id);
+      } else if (groupBy === 'domain') {
+        taskAgent.setDomain(id, over.id);
+      }
       setTasks([...scheduleAgent.getTasks()]);
     }
     setActiveId(null);
@@ -226,21 +242,39 @@ export default function App() {
           Add
         </button>
       </div>
+      <div className="flex gap-2 mb-4">
+        {Object.entries(GROUPINGS).map(([key, { label }]) => (
+          <button
+            key={key}
+            className={`px-3 py-1 rounded ${
+              groupBy === key ? 'bg-blue-500 text-white' : 'bg-gray-200'
+            }`}
+            onClick={() => setGroupBy(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       <DndContext
         sensors={sensors}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-5 gap-4">
-          {Object.entries(BUCKETS).map(([bKey, bLabel]) => (
+        <div
+          className="grid gap-4"
+          style={{
+            gridTemplateColumns: `repeat(${Object.keys(GROUPINGS[groupBy].categories).length}, minmax(0, 1fr))`,
+          }}
+        >
+          {Object.entries(GROUPINGS[groupBy].categories).map(([bKey, bLabel]) => (
             <DroppableColumn key={bKey} id={bKey}>
               <h2 className="font-semibold mb-2 text-center">{bLabel}</h2>
               <ul className="space-y-2">
                 {tasks
-                  .filter((t) => t.bucket === bKey && !t.completed)
+                  .filter((t) => t[groupBy] === bKey && !t.completed)
                   .map((t) => (
-                    <DraggableTask key={t.id} task={t}>
+                    <DraggableTask key={t.id} task={t} groupBy={groupBy}>
                       {editingId === t.id ? (
                         <>
                           <input

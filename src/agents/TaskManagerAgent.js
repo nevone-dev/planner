@@ -77,6 +77,14 @@ export default class TaskManagerAgent {
     }
   }
 
+  setDomain(id, domain) {
+    const task = this.tasks.find((t) => t.id === id);
+    if (task) {
+      task.domain = domain;
+      this._emit();
+    }
+  }
+
   deleteTask(id) {
     const idx = this.tasks.findIndex((t) => t.id === id);
     if (idx !== -1) {
