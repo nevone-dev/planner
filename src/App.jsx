@@ -45,11 +45,18 @@ function DraggableTask({ task, children }) {
   return (
     <li
       ref={setNodeRef}
-      {...listeners}
-      {...attributes}
       className="border rounded p-2 text-sm bg-white transition-transform"
     >
-      {children}
+      <div className="flex items-start gap-1">
+        <span
+          {...listeners}
+          {...attributes}
+          className="cursor-grab select-none text-gray-400"
+        >
+          ☰
+        </span>
+        <div className="flex-grow">{children}</div>
+      </div>
     </li>
   );
 }
