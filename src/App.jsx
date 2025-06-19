@@ -8,6 +8,7 @@ import {
   useSensors,
   useDraggable,
   useDroppable,
+  DragOverlay,
 } from '@dnd-kit/core';
 
 const BUCKETS = {
@@ -38,7 +39,7 @@ function DraggableTask({ task, children }) {
       ref={setNodeRef}
       {...listeners}
       {...attributes}
-      className="border rounded p-2 text-sm bg-white"
+      className="border rounded p-2 text-sm bg-white transition-transform"
     >
       {children}
     </li>
@@ -73,8 +74,13 @@ export default function App() {
   const [editingBucket, setEditingBucket] = React.useState('now');
   const [editingAltitude, setEditingAltitude] = React.useState('task');
   const [editingDomain, setEditingDomain] = React.useState('General');
+  const [activeId, setActiveId] = React.useState(null);
 
   const sensors = useSensors(useSensor(PointerSensor));
+
+  const handleDragStart = (event) => {
+    setActiveId(event.active.id);
+  };
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
@@ -82,6 +88,7 @@ export default function App() {
       taskAgent.setBucket(Number(active.id), over.id);
       setTasks([...scheduleAgent.getTasks()]);
     }
+    setActiveId(null);
   };
 
   React.useEffect(() => {
@@ -205,7 +212,11 @@ export default function App() {
         </button>
       </div>
 
-      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <DndContext
+        sensors={sensors}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
         <div className="grid grid-cols-5 gap-4">
           {Object.entries(BUCKETS).map(([bKey, bLabel]) => (
             <DroppableColumn key={bKey} id={bKey}>
@@ -317,6 +328,13 @@ export default function App() {
             </DroppableColumn>
           ))}
         </div>
+        <DragOverlay>
+          {activeId && (
+            <li className="border rounded p-2 text-sm bg-white shadow-lg">
+              {tasks.find((t) => t.id === Number(activeId))?.title}
+            </li>
+          )}
+        </DragOverlay>
       </DndContext>
 
       <h2 className="text-xl font-semibold mt-6 mb-2">Completed</h2>
