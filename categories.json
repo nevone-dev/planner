@@ -1,0 +1,25 @@
+{
+  "buckets": {
+    "now": "🔥 Now",
+    "next": "🌓 Next",
+    "later": "🌱 Later",
+    "someday": "💤 Someday",
+    "incubator": "🧪 Incubator"
+  },
+  "altitudes": {
+    "vision": "40k – Vision",
+    "domain": "20k – Domain",
+    "objective": "10k – Objective",
+    "project": "5k – Project",
+    "task": "Runway"
+  },
+  "domains": [
+    "Health",
+    "Career",
+    "Finance",
+    "Learning",
+    "Life Admin",
+    "Home Maintenance",
+    "General"
+  ]
+}
