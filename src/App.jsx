@@ -11,38 +11,32 @@ import {
   DragOverlay,
 } from '@dnd-kit/core';
 
-const BUCKETS = {
-  now: '🔥 Now',
-  next: '🌓 Next',
-  later: '🌱 Later',
-  someday: '💤 Someday',
-  incubator: '🧪 Incubator',
-};
-
-const ALTITUDES = {
-  vision: '40k – Vision',
-  domain: '20k – Domain',
-  objective: '10k – Objective',
-  project: '5k – Project',
-  task: 'Runway',
-};
-
-const DOMAINS = [
-  'Health',
-  'Career',
-  'Finance',
-  'Learning',
-  'Life Admin',
-  'Home Maintenance',
-  'General',
-];
-
-const DOMAIN_MAP = DOMAINS.reduce((acc, d) => ({ ...acc, [d]: d }), {});
-
-const GROUPINGS = {
-  bucket: { label: 'Bucket', categories: BUCKETS },
-  altitude: { label: 'Altitude', categories: ALTITUDES },
-  domain: { label: 'Domain', categories: DOMAIN_MAP },
+// Categories are loaded from an external JSON file so they can be tweaked
+// without rebuilding the application.
+const DEFAULT_CATEGORIES = {
+  buckets: {
+    now: '🔥 Now',
+    next: '🌓 Next',
+    later: '🌱 Later',
+    someday: '💤 Someday',
+    incubator: '🧪 Incubator',
+  },
+  altitudes: {
+    vision: '40k – Vision',
+    domain: '20k – Domain',
+    objective: '10k – Objective',
+    project: '5k – Project',
+    task: 'Runway',
+  },
+  domains: [
+    'Health',
+    'Career',
+    'Finance',
+    'Learning',
+    'Life Admin',
+    'Home Maintenance',
+    'General',
+  ],
 };
 
 function DraggableTask({ task, groupBy, children }) {
@@ -85,6 +79,24 @@ export default function App() {
     [taskAgent]
   );
 
+  const [categories, setCategories] = React.useState(DEFAULT_CATEGORIES);
+
+  const BUCKETS = categories.buckets;
+  const ALTITUDES = categories.altitudes;
+  const DOMAINS = categories.domains;
+  const DOMAIN_MAP = React.useMemo(
+    () => DOMAINS.reduce((acc, d) => ({ ...acc, [d]: d }), {}),
+    [DOMAINS]
+  );
+  const GROUPINGS = React.useMemo(
+    () => ({
+      bucket: { label: 'Bucket', categories: BUCKETS },
+      altitude: { label: 'Altitude', categories: ALTITUDES },
+      domain: { label: 'Domain', categories: DOMAIN_MAP },
+    }),
+    [BUCKETS, ALTITUDES, DOMAIN_MAP]
+  );
+
   const [tasks, setTasks] = React.useState(scheduleAgent.getTasks());
   const [newTitle, setNewTitle] = React.useState('');
   const [newDue, setNewDue] = React.useState('');
@@ -101,6 +113,25 @@ export default function App() {
   const [groupBy, setGroupBy] = React.useState('bucket');
 
   const sensors = useSensors(useSensor(PointerSensor));
+
+  // Load categories from categories.json periodically so changes on disk are
+  // picked up without restarting the app.
+  React.useEffect(() => {
+    async function loadCats() {
+      try {
+        const res = await fetch('/categories.json');
+        if (res.ok) {
+          const data = await res.json();
+          setCategories(data);
+        }
+      } catch (err) {
+        console.error('Failed to load categories', err);
+      }
+    }
+    loadCats();
+    const id = setInterval(loadCats, 5000);
+    return () => clearInterval(id);
+  }, []);
 
   const handleDragStart = (event) => {
     setActiveId(event.active.id);
